@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Department, PredictionData, Recommendation, KPIData, PatientArrival } from "@/types/hospital";
-import { usePredictionApi } from "./api/usePredictionApi";
 
 export const useHospitalSimulation = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -17,9 +16,6 @@ export const useHospitalSimulation = () => {
     utilizationChange: 0,
     efficiencyChange: 0,
   });
-  
-  // ML API for predictions
-  const { getPatientPrediction, isLoading: isPredicting } = usePredictionApi();
 
   const intervalRef = useRef<NodeJS.Timeout>();
   const predictionIntervalRef = useRef<NodeJS.Timeout>();
@@ -229,7 +225,18 @@ export const useHospitalSimulation = () => {
     });
   }, [updateKPIs, generateRecommendations]);
 
-  // Update predictions with new data points using ML API
+  // Mock prediction function to replace ML API
+  const getMockPatientPrediction = useCallback((hour: number, day: number, currentPatients: number, isWeekend: boolean): number => {
+    // Simple mock algorithm based on time patterns
+    const baseLoad = isWeekend ? 40 : 60;
+    const hourFactor = hour >= 8 && hour <= 18 ? 1.5 : 0.7; // Higher during day hours
+    const dayFactor = day === 1 ? 1.2 : day === 5 ? 1.3 : 1.0; // Higher on Monday and Friday
+    const randomVariation = 0.8 + Math.random() * 0.4; // ±20% random variation
+    
+    return Math.floor(baseLoad * hourFactor * dayFactor * randomVariation);
+  }, []);
+
+  // Update predictions with new data points using mock predictions
   const updatePredictions = useCallback(async () => {
     try {
       const now = Date.now();
@@ -238,8 +245,8 @@ export const useHospitalSimulation = () => {
       const isWeekend = currentDay === 0 || currentDay === 6;
       const totalPatients = departments.reduce((sum, dept) => sum + dept.currentQueue, 0);
       
-      // Get ML-based prediction
-      const predicted = await getPatientPrediction(
+      // Get mock prediction
+      const predicted = getMockPatientPrediction(
         currentHour, 
         currentDay, 
         totalPatients,
@@ -288,7 +295,7 @@ export const useHospitalSimulation = () => {
         return newData.slice(-24);
       });
     }
-  }, [departments, getPatientPrediction]);
+  }, [departments, getMockPatientPrediction]);
 
   // Start simulation
   const startSimulation = useCallback(() => {

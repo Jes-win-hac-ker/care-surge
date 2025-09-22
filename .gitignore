@@ -23,14 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# ML Backend files
-ml-backend/model.joblib
-ml-backend/__pycache__/
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
-
 # Environment files
 .env
 .env.local

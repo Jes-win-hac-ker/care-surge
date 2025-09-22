@@ -1,4 +1,4 @@
-name: Deploy Care-Surge Application
+name: Deploy Care-Surge Frontend
 
 on:
   push:
@@ -24,9 +24,6 @@ jobs:
 
       - name: Build frontend
         run: npm run build
-        env:
-          # Set the base URL for production - adjust if needed
-          VITE_API_URL: ${{ secrets.API_URL || 'https://your-backend-url.com' }}
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
@@ -34,64 +31,3 @@ jobs:
           folder: dist # The folder the action should deploy
           branch: gh-pages # The branch the action should deploy to
           clean: true # Automatically remove deleted files from the deploy branch
-
-  # Backend deployment job (for Digital Ocean)
-  deploy-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-
-      - name: Install Python dependencies
-        run: |
-          cd ml-backend
-          pip install -r requirements.txt
-          pip install pytest
-
-      - name: Test backend
-        run: |
-          cd ml-backend
-          pytest || echo "No tests found or tests failed"
-
-      - name: Build and push Docker image
-        # Only run if we have the required secrets
-        if: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN != '' }}
-        env:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'registry.digitalocean.com' }}
-          DOCKER_REPOSITORY: ${{ secrets.DOCKER_REPOSITORY || 'care-surge' }}
-        run: |
-          # Install doctl to interface with DigitalOcean
-          curl -sL https://github.com/digitalocean/doctl/releases/download/v1.92.1/doctl-1.92.1-linux-amd64.tar.gz | tar -xzv
-          sudo mv doctl /usr/local/bin
-          
-          # Authenticate with DigitalOcean
-          doctl auth init -t $DIGITALOCEAN_ACCESS_TOKEN
-          
-          # Build and tag Docker image
-          cd ml-backend
-          docker build -t ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${GITHUB_SHA::7} .
-          docker tag ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${GITHUB_SHA::7} ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:latest
-          
-          # Login to DigitalOcean registry
-          doctl registry login
-          
-          # Push Docker image
-          docker push ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${GITHUB_SHA::7}
-          docker push ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:latest
-          
-      - name: Deploy to Digital Ocean
-        # Only run if we have the required secrets
-        if: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN != '' && secrets.DIGITALOCEAN_APP_ID != '' }}
-        env:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          DIGITALOCEAN_APP_ID: ${{ secrets.DIGITALOCEAN_APP_ID }}
-        run: |
-          # Trigger a deployment
-          doctl apps create-deployment $DIGITALOCEAN_APP_ID --wait

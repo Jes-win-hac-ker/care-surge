@@ -62,12 +62,12 @@ This project is built with:
 
 ## How can I deploy this project?
 
-This project is configured for automated deployment using GitHub Actions.
+This project is configured for automated deployment to GitHub Pages using GitHub Actions.
 
 ### Deployment Architecture
 
-- **Frontend**: Deployed to GitHub Pages
-- **Backend**: Deployed to Digital Ocean (or your preferred hosting service)
+- **Frontend**: Deployed to GitHub Pages (static React application)
+- **Data**: Uses mock simulation data (no backend required)
 
 ### Setup for Deployment
 
@@ -75,14 +75,7 @@ This project is configured for automated deployment using GitHub Actions.
    - The workflow automatically deploys the frontend to the `gh-pages` branch
    - Ensure GitHub Pages is enabled in your repository settings, pointing to the `gh-pages` branch
 
-2. **Digital Ocean Setup**:
-   - Create a new app on Digital Ocean App Platform
-   - Add the following secrets to your GitHub repository:
-     - `DIGITALOCEAN_ACCESS_TOKEN`: Your Digital Ocean API token
-     - `DIGITALOCEAN_APP_ID`: Your Digital Ocean App ID
-     - `API_URL`: URL of your deployed backend (e.g., `https://api.your-domain.com`)
-
-3. **Manual Deployment**:
+2. **Manual Deployment**:
    - You can manually trigger the workflow from the Actions tab on GitHub
    - Alternatively, push to the `main` branch to trigger automatic deployment
    
@@ -90,20 +83,14 @@ This project is configured for automated deployment using GitHub Actions.
 
 The deployment configuration is defined in `.github/workflows/deploy.yml` and includes:
 
-- Building and testing the frontend React application
+- Building the React application
 - Deploying the frontend to GitHub Pages
-- Building a Docker image for the backend
-- Deploying the backend to Digital Ocean
 
 ### Local Development
 
-1. Run the frontend:
-   ```bash
-   npm run dev
-   ```
+Run the frontend:
+```bash
+npm run dev
+```
 
-2. Run the backend:
-   ```bash
-   cd ml-backend
-   uvicorn main:app --reload --host 0.0.0.0 --port 8000
-   ```
+The application uses mock data for all simulations and predictions, so no backend setup is required.
