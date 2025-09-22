@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Department, PredictionData, Recommendation, KPIData, PatientArrival } from "@/types/hospital";
+import { usePredictionApi } from "./api/usePredictionApi";
 
 export const useHospitalSimulation = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -16,6 +17,9 @@ export const useHospitalSimulation = () => {
     utilizationChange: 0,
     efficiencyChange: 0,
   });
+  
+  // ML API for predictions
+  const { getPatientPrediction, isLoading: isPredicting } = usePredictionApi();
 
   const intervalRef = useRef<NodeJS.Timeout>();
   const predictionIntervalRef = useRef<NodeJS.Timeout>();
@@ -225,32 +229,66 @@ export const useHospitalSimulation = () => {
     });
   }, [updateKPIs, generateRecommendations]);
 
-  // Update predictions with new data points
-  const updatePredictions = useCallback(() => {
-    setPredictions(prev => {
+  // Update predictions with new data points using ML API
+  const updatePredictions = useCallback(async () => {
+    try {
       const now = Date.now();
-      const newData = [...prev];
+      const currentHour = new Date().getHours();
+      const currentDay = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+      const isWeekend = currentDay === 0 || currentDay === 6;
+      const totalPatients = departments.reduce((sum, dept) => sum + dept.currentQueue, 0);
       
-      // Add new prediction point
-      const lastPoint = newData[newData.length - 1];
-      const nextTimestamp = lastPoint.timestamp + (60 * 60 * 1000);
+      // Get ML-based prediction
+      const predicted = await getPatientPrediction(
+        currentHour, 
+        currentDay, 
+        totalPatients,
+        isWeekend
+      );
       
-      const baseValue = 20 + Math.sin(Date.now() * 0.0001) * 10;
-      const predicted = Math.max(0, Math.floor(baseValue + (Math.random() - 0.5) * 6));
-      
-      newData.push({
-        timestamp: nextTimestamp,
-        actual: 0, // Will be filled when time passes
-        predicted,
-        emergency: Math.floor(predicted * 0.3),
-        opd: Math.floor(predicted * 0.5),
-        diagnostics: Math.floor(predicted * 0.2),
+      setPredictions(prev => {
+        const newData = [...prev];
+        
+        // Add new prediction point
+        const lastPoint = newData[newData.length - 1];
+        const nextTimestamp = lastPoint.timestamp + (60 * 60 * 1000);
+        
+        newData.push({
+          timestamp: nextTimestamp,
+          actual: 0, // Will be filled when time passes
+          predicted,
+          emergency: Math.floor(predicted * 0.3),
+          opd: Math.floor(predicted * 0.5),
+          diagnostics: Math.floor(predicted * 0.2),
+        });
+        
+        // Remove old data points (keep last 24 hours)
+        return newData.slice(-24);
       });
-      
-      // Remove old data points (keep last 24 hours)
-      return newData.slice(-24);
-    });
-  }, []);
+    } catch (error) {
+      console.error("Error updating predictions:", error);
+      // Fallback to random prediction if API fails
+      setPredictions(prev => {
+        const newData = [...prev];
+        const lastPoint = newData[newData.length - 1];
+        const nextTimestamp = lastPoint.timestamp + (60 * 60 * 1000);
+        
+        const baseValue = 20 + Math.sin(Date.now() * 0.0001) * 10;
+        const predicted = Math.max(0, Math.floor(baseValue + (Math.random() - 0.5) * 6));
+        
+        newData.push({
+          timestamp: nextTimestamp,
+          actual: 0,
+          predicted,
+          emergency: Math.floor(predicted * 0.3),
+          opd: Math.floor(predicted * 0.5),
+          diagnostics: Math.floor(predicted * 0.2),
+        });
+        
+        return newData.slice(-24);
+      });
+    }
+  }, [departments, getPatientPrediction]);
 
   // Start simulation
   const startSimulation = useCallback(() => {

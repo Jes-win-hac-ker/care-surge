@@ -62,12 +62,48 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/195a4e38-a1dc-4c0d-9755-aaa2cc56b793) and click on Share -> Publish.
+This project is configured for automated deployment using GitHub Actions.
 
-## Can I connect a custom domain to my Lovable project?
+### Deployment Architecture
 
-Yes, you can!
+- **Frontend**: Deployed to GitHub Pages
+- **Backend**: Deployed to Digital Ocean (or your preferred hosting service)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Setup for Deployment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. **GitHub Pages Setup**:
+   - The workflow automatically deploys the frontend to the `gh-pages` branch
+   - Ensure GitHub Pages is enabled in your repository settings, pointing to the `gh-pages` branch
+
+2. **Digital Ocean Setup**:
+   - Create a new app on Digital Ocean App Platform
+   - Add the following secrets to your GitHub repository:
+     - `DIGITALOCEAN_ACCESS_TOKEN`: Your Digital Ocean API token
+     - `DIGITALOCEAN_APP_ID`: Your Digital Ocean App ID
+     - `API_URL`: URL of your deployed backend (e.g., `https://api.your-domain.com`)
+
+3. **Manual Deployment**:
+   - You can manually trigger the workflow from the Actions tab on GitHub
+   - Alternatively, push to the `main` branch to trigger automatic deployment
+   
+### GitHub Actions Workflow
+
+The deployment configuration is defined in `.github/workflows/deploy.yml` and includes:
+
+- Building and testing the frontend React application
+- Deploying the frontend to GitHub Pages
+- Building a Docker image for the backend
+- Deploying the backend to Digital Ocean
+
+### Local Development
+
+1. Run the frontend:
+   ```bash
+   npm run dev
+   ```
+
+2. Run the backend:
+   ```bash
+   cd ml-backend
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```

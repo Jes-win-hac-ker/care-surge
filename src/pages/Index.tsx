@@ -43,9 +43,11 @@ const Index = () => {
               <h1 className="text-4xl font-bold gradient-text mb-2">
                 AI Hospital Resource Optimizer
               </h1>
-              <p className="text-muted-foreground text-lg">
-                Real-time patient flow prediction and resource allocation
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground text-lg">
+                  Real-time patient flow prediction and resource allocation
+                </p>
+              </div>
             </div>
             <SimulationControls
               isRunning={isRunning}
