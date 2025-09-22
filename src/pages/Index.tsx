@@ -4,6 +4,10 @@ import { PatientPredictionChart } from "@/components/PatientPredictionChart";
 import { StaffRecommendations } from "@/components/StaffRecommendations";
 import { SimulationControls } from "@/components/SimulationControls";
 import { KPIMetrics } from "@/components/KPIMetrics";
+import { BedAvailabilityHeatmap } from "@/components/BedAvailabilityHeatmap";
+import { EquipmentUsageTracker } from "@/components/EquipmentUsageTracker";
+import { AmbulanceOptimizer } from "@/components/AmbulanceOptimizer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHospitalSimulation } from "@/hooks/useHospitalSimulation";
 import heroBackground from "@/assets/hospital-hero-bg.jpg";
 
@@ -13,6 +17,8 @@ const Index = () => {
     predictions,
     recommendations,
     kpis,
+    equipments,
+    ambulances,
     isRunning,
     startSimulation,
     stopSimulation,
@@ -86,13 +92,39 @@ const Index = () => {
         </div>
 
         {/* Patient Prediction Chart */}
-        <div className="medical-card rounded-lg p-6">
+        <div className="medical-card rounded-lg p-6 mb-8">
           <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-accent glow-primary"></div>
             Patient Arrival Predictions
           </h2>
           <PatientPredictionChart data={predictions} />
         </div>
+        
+        {/* Resource Management Section */}
+        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-primary glow-primary"></div>
+          Resource Management
+        </h2>
+        
+        <Tabs defaultValue="beds" className="mb-8">
+          <TabsList className="mb-4">
+            <TabsTrigger value="beds">Bed Availability</TabsTrigger>
+            <TabsTrigger value="equipment">Equipment Usage</TabsTrigger>
+            <TabsTrigger value="ambulance">Ambulance Optimization</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="beds">
+            <BedAvailabilityHeatmap departments={departments} />
+          </TabsContent>
+          
+          <TabsContent value="equipment">
+            <EquipmentUsageTracker equipment={equipments} />
+          </TabsContent>
+          
+          <TabsContent value="ambulance">
+            <AmbulanceOptimizer ambulances={ambulances} departments={departments} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
